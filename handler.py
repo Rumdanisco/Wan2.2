@@ -1,66 +1,76 @@
 # handler.py
 import runpod
+import subprocess
 import os
-import tempfile
-import shutil
-import sys
-import argparse
-from generate import _parse_args, generate
+import uuid
 
 
-def run_inference(job):
+def generate_video(input_params):
     """
-    RunPod handler for Wan2.2.
-    job['input'] should contain:
-        task: "t2v-A14B" | "i2v-A14B" | "animate-14B" | "s2v-14B"
-        prompt: text prompt
-        image: (optional) path or uploaded file
-        audio: (optional) path for s2v
-        enable_tts: (optional) bool
-        size: (optional) resolution, default "1280*720"
-        frame_num: (optional) frames
+    Run generate.py with parameters from RunPod API request.
     """
 
-    inputs = job["input"]
+    task = input_params.get("task", "t2v")   # "t2v" or "i2v"
+    prompt = input_params.get("prompt", "A cinematic scene of a dragon flying")
+    size = input_params.get("size", "1280*720")
+    steps = int(input_params.get("steps", 25))
+    seed = int(input_params.get("seed", 42))
 
-    # temp working dir
-    work_dir = tempfile.mkdtemp()
-    output_path = os.path.join(work_dir, "output.mp4")
+    # User type: free or pro
+    user_type = input_params.get("user_type", "free")  # default = free
 
-    # build CLI-style args
-    cli_args = [
-        "--task", inputs.get("task", "t2v-A14B"),
-        "--ckpt_dir", inputs.get("ckpt_dir", "./Wan2.2-T2V-A14B"),
-        "--prompt", inputs.get("prompt", "A cat riding a surfboard"),
-        "--size", inputs.get("size", "1280*720"),
-        "--save_file", output_path
+    # Duration request from frontend
+    duration = int(input_params.get("duration", 5))  # 5 or 10 sec
+
+    # Enforce limits: free users can only do 5 sec
+    if user_type == "free" and duration > 5:
+        return {"error": "Upgrade required for longer videos."}
+
+    # Map duration (seconds) to frames, assuming ~16 FPS
+    fps = 16
+    frame_num = duration * fps
+
+    # temp output filename
+    output_file = f"/workspace/output_{uuid.uuid4().hex}.mp4"
+
+    # Build base command
+    cmd = [
+        "python", "generate.py",
+        "--task", task,
+        "--prompt", prompt,
+        "--size", size,
+        "--frame_num", str(frame_num),
+        "--steps", str(steps),
+        "--seed", str(seed)
     ]
 
-    if "image" in inputs and inputs["image"]:
-        cli_args += ["--image", inputs["image"]]
+    # Add image if i2v
+    if task == "i2v":
+        image_path = input_params.get("image")
+        if not image_path:
+            return {"error": "Task 'i2v' requires an image"}
+        cmd.extend(["--image", image_path])
 
-    if "audio" in inputs and inputs["audio"]:
-        cli_args += ["--audio", inputs["audio"]]
+    # Run the generator
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        logs = result.stdout + "\n" + result.stderr
+    except subprocess.CalledProcessError as e:
+        return {"error": str(e), "logs": e.stdout + e.stderr}
 
-    if inputs.get("enable_tts", False):
-        cli_args += ["--enable_tts"]
+    # Find the latest generated .mp4 in workspace
+    for f in os.listdir("/workspace"):
+        if f.endswith(".mp4"):
+            output_file = os.path.join("/workspace", f)
 
-    if "frame_num" in inputs:
-        cli_args += ["--frame_num", str(inputs["frame_num"])]
-
-    # parse args using original _parse_args
-    parser = _parse_args()
-    args = parser.parse_args(cli_args)
-
-    # call original generator
-    generate(args)
-
-    # move result to /runpod-volume
-    result_path = f"/runpod-volume/{os.path.basename(output_path)}"
-    shutil.copy(output_path, result_path)
-
-    return {"output": result_path}
+    return {
+        "video_path": output_file,
+        "logs": logs,
+        "user_type": user_type,
+        "duration": duration,
+        "frames": frame_num
+    }
 
 
-# start RunPod serverless handler
-runpod.serverless.start({"handler": run_inference})
+# Start RunPod serverless handler
+runpod.serverless.start({"handler": generate_video})
