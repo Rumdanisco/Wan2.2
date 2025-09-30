@@ -3,6 +3,7 @@ import runpod
 import subprocess
 import os
 import uuid
+import sys
 
 
 def generate_video(input_params):
@@ -33,9 +34,9 @@ def generate_video(input_params):
     # temp output filename
     output_file = f"/workspace/output_{uuid.uuid4().hex}.mp4"
 
-    # Build base command
+    # ✅ Use current Python interpreter instead of plain "python"
     cmd = [
-        "python", "generate.py",
+        sys.executable, "generate.py",
         "--task", task,
         "--prompt", prompt,
         "--size", size,
@@ -56,7 +57,7 @@ def generate_video(input_params):
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         logs = result.stdout + "\n" + result.stderr
     except subprocess.CalledProcessError as e:
-        return {"error": str(e), "logs": e.stdout + e.stderr}
+        return {"error": str(e), "logs": (e.stdout or "") + (e.stderr or "")}
 
     # Find the latest generated .mp4 in workspace
     for f in os.listdir("/workspace"):
