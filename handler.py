@@ -11,7 +11,19 @@ def generate_video(input_params):
     Run generate.py with parameters from RunPod API request.
     """
 
-    task = input_params.get("task", "t2v")   # "t2v" or "i2v"
+    # Map simple names -> WAN task names
+    task_map = {
+        "t2v": "t2v-A14B",
+        "i2v": "i2v-A14B",
+        "ti2v": "ti2v-5B",
+        "animate": "animate-14B",
+        "s2v": "s2v-14B"
+    }
+
+    # Default task = t2v
+    raw_task = input_params.get("task", "t2v")
+    task = task_map.get(raw_task, raw_task)
+
     prompt = input_params.get("prompt", "A cinematic scene of a dragon flying")
     size = input_params.get("size", "1280*720")
     steps = int(input_params.get("steps", 25))
@@ -46,7 +58,7 @@ def generate_video(input_params):
     ]
 
     # Add image if i2v
-    if task == "i2v":
+    if task in ["i2v-A14B"]:
         image_path = input_params.get("image")
         if not image_path:
             return {"error": "Task 'i2v' requires an image"}
