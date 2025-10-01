@@ -17,11 +17,16 @@ imageio[ffmpeg]
 imageio-ffmpeg
 moviepy
 soundfile
+librosa
+decord
 
 easydict
 ftfy
 einops==0.8.0
-decord
-librosa
+peft
+huggingface-hub
+datasets
+scikit-learn
+pyyaml
 
 runpod==1.6.2
