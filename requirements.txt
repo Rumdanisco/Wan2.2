@@ -6,8 +6,6 @@ diffusers>=0.31.0
 transformers>=4.49.0,<=4.51.3
 tokenizers>=0.20.3
 accelerate>=1.1.1
-safetensors
-huggingface_hub
 
 tqdm
 numpy>=1.23.5,<2
@@ -22,5 +20,6 @@ soundfile
 
 easydict
 ftfy
+einops==0.8.0
 
 runpod==1.6.2
