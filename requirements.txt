@@ -22,5 +22,6 @@ easydict
 ftfy
 einops==0.8.0
 decord
+librosa
 
 runpod==1.6.2
