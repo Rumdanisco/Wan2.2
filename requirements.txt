@@ -21,5 +21,6 @@ soundfile
 easydict
 ftfy
 einops==0.8.0
+decord
 
 runpod==1.6.2
