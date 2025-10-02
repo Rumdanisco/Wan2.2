@@ -67,10 +67,14 @@ def generate(args):
 
     # ✅ If ckpt_dir looks like a HF repo, download it
     if "/" in args.ckpt_dir:  # e.g. "Wan-AI/Wan2.2-T2V-A14B"
+        hf_token = os.getenv("HF_TOKEN")
+        if not hf_token:
+            raise ValueError("HF_TOKEN not found in environment variables. Please set it in RunPod secrets.")
+
         logging.info(f"Downloading model from Hugging Face: {args.ckpt_dir}")
         local_dir = snapshot_download(
             repo_id=args.ckpt_dir,
-            token=os.getenv("HF_TOKEN"),  # must be set in RunPod env
+            token=hf_token,
             cache_dir="/workspace/hf_models"
         )
         args.ckpt_dir = local_dir
