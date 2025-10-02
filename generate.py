@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from PIL import Image
 import torch
+import os
+from huggingface_hub import snapshot_download
 
 import wan
 from wan.configs import MAX_AREA_CONFIGS, SIZE_CONFIGS, WAN_CONFIGS
@@ -62,6 +64,16 @@ def _parse_args():
 def generate(args):
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s: %(message)s")
     cfg = WAN_CONFIGS[args.task]
+
+    # ✅ If ckpt_dir looks like a HF repo, download it
+    if "/" in args.ckpt_dir:  # e.g. "Wan-AI/Wan2.2-T2V-A14B"
+        logging.info(f"Downloading model from Hugging Face: {args.ckpt_dir}")
+        local_dir = snapshot_download(
+            repo_id=args.ckpt_dir,
+            token=os.getenv("HF_TOKEN"),  # must be set in RunPod env
+            cache_dir="/workspace/hf_models"
+        )
+        args.ckpt_dir = local_dir
 
     logging.info(f"Loading model for task {args.task} from {args.ckpt_dir}")
 
