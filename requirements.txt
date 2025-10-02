@@ -29,4 +29,5 @@ datasets
 scikit-learn
 pyyaml
 
+huggingface-hub>=0.23.0
 runpod==1.6.2
