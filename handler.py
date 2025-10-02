@@ -1,5 +1,5 @@
 # handler.py
-import runpod
+import runpo
 import subprocess
 import os
 import uuid
