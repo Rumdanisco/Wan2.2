@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libsm6 libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# ✅ Ensure temp directory exists
-RUN mkdir -p /workspace/tmp
+# Create directories for HuggingFace models + tmp
+RUN mkdir -p /workspace/hf_models /workspace/tmp
 
 # Copy requirements and install
 COPY requirements.txt .
