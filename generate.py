@@ -11,6 +11,14 @@ import wan
 from wan.configs import MAX_AREA_CONFIGS, SIZE_CONFIGS, WAN_CONFIGS
 from wan.utils.utils import save_video, merge_video_audio
 
+# ✅ Environment checks
+if "HF_TOKEN" not in os.environ:
+    raise ValueError("HF_TOKEN not found in environment variables. Please set it in RunPod.")
+
+# ✅ Ensure temp directory exists
+tmp_dir = os.environ.get("TMPDIR", "/workspace/tmp")
+os.makedirs(tmp_dir, exist_ok=True)
+
 
 EXAMPLE_PROMPT = {
     "t2v-A14B": {"prompt": "A cinematic shot of a dragon flying over snowy mountains."},
