@@ -8,6 +8,7 @@ WORKDIR /workspace
 ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME=/workspace/hf_models \
     HF_TOKEN=${HF_TOKEN} \
+    TMPDIR=/workspace/tmp \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
@@ -16,6 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git wget curl ffmpeg build-essential \
     libgl1 libglib2.0-0 libsm6 libxext6 \
     && rm -rf /var/lib/apt/lists/*
+
+# ✅ Ensure temp directory exists
+RUN mkdir -p /workspace/tmp
 
 # Copy requirements and install
 COPY requirements.txt .
