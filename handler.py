@@ -4,6 +4,7 @@ import subprocess
 import os
 import uuid
 import sys
+import requests
 
 # ✅ Lock to a single I2V model (Wan2.2-I2V-A8B)
 WAN_MODEL = "Wan-AI/Wan2.2-I2V-A8B"
@@ -11,7 +12,7 @@ WAN_MODEL = "Wan-AI/Wan2.2-I2V-A8B"
 def generate_video(input_params):
     """
     Run generate.py with parameters from RunPod API request.
-    Only supports Image-to-Video (I2V).
+    Supports Image-to-Video (I2V).
     """
 
     prompt = input_params.get("prompt", "A futuristic city at night")
@@ -24,14 +25,35 @@ def generate_video(input_params):
     if not image_path:
         return {"error": "Task 'i2v' requires an image."}
 
+    # ✅ Support image URLs (download to /workspace/)
+    if image_path.startswith("http://") or image_path.startswith("https://"):
+        local_image = f"/workspace/{uuid.uuid4().hex}.png"
+        try:
+            r = requests.get(image_path, timeout=30)
+            r.raise_for_status()
+            with open(local_image, "wb") as f:
+                f.write(r.content)
+            image_path = local_image
+        except Exception as e:
+            return {"error": f"Failed to download image from URL: {str(e)}"}
+
     # ✅ User type rules
     user_type = input_params.get("user_type", "free")
-    duration = int(input_params.get("duration", 5))
-    if user_type == "free" and duration > 5:
-        return {"error": "Upgrade required for longer videos."}
 
-    fps = 16
-    frame_num = duration * fps
+    # ✅ Prefer frame_num from frontend, fallback to duration
+    frame_num = input_params.get("frame_num")
+    if frame_num is not None:
+        try:
+            frame_num = int(frame_num)
+        except ValueError:
+            return {"error": "Invalid frame_num value."}
+    else:
+        duration = int(input_params.get("duration", 5))
+        if user_type == "free" and duration > 5:
+            return {"error": "Upgrade required for longer videos."}
+        fps = 16
+        frame_num = duration * fps
+
     output_file = f"/workspace/output_{uuid.uuid4().hex}.mp4"
 
     # ✅ Call generate.py
@@ -65,7 +87,6 @@ def generate_video(input_params):
         "video_path": output_file,
         "logs": logs,
         "user_type": user_type,
-        "duration": duration,
         "frames": frame_num,
         "task": "i2v-A8B",
         "repo": WAN_MODEL
