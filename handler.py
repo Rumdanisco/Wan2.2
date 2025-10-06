@@ -4,12 +4,18 @@ import torch
 from diffusers import DiffusionPipeline
 import os
 import requests
+import shutil
 
 
 def generate_video(job):
     """
     RunPod handler for Wan 2.1 T2V 1.3B Diffusers (text-to-video and image-to-video)
     """
+
+    # 🧹 Clear Hugging Face cache before loading model
+    shutil.rmtree("/root/.cache/huggingface", ignore_errors=True)
+    os.makedirs("/root/.cache/huggingface", exist_ok=True)
+
     inputs = job["input"]
     prompt = inputs.get("prompt", "A cinematic shot of a futuristic city at night.")
     image_url = inputs.get("image", None)
