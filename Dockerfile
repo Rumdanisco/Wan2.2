@@ -1,7 +1,7 @@
-# ✅ Use official PyTorch base image with CUDA & cuDNN
-FROM pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime
+# ✅ Use a stable PyTorch image with CUDA support
+FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /workspace
 
 # ✅ Install essential system packages
@@ -12,27 +12,26 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
  && rm -rf /var/lib/apt/lists/*
 
-# ✅ Copy your requirements file into container
+# ✅ Copy requirements first (for layer caching)
 COPY requirements.txt .
 
-# ✅ Install Python dependencies
+# ✅ Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ✅ Copy your handler file
+# ✅ Copy handler file
 COPY handler.py .
 
-# ✅ (Optional) Create an output directory for saving generated videos
+# ✅ Create output folder
 RUN mkdir -p /workspace/output
 
-# ✅ Set environment variables for Hugging Face access and cache
-# These can also be set in RunPod Environment Variables
-ENV MODEL_REPO=Wan-AI/Wan2.2-TI2V-1.3B-Diffusers
+# ✅ Environment Variables
+ENV MODEL_REPO=Wan-AI/Wan2.1-T2V-1.3B-Diffusers
 ENV HF_HOME=/workspace/.cache/huggingface
 ENV TRANSFORMERS_CACHE=/workspace/.cache/huggingface
-ENV HUGGINGFACE_HUB_CACHE=/workspace/.cache/huggingface
+ENV DIFFUSERS_CACHE=/workspace/.cache/huggingface
 
-# ✅ Expose port (if RunPod needs it)
+# ✅ Expose port (if needed)
 EXPOSE 8000
 
-# ✅ Start the RunPod serverless handler
+# ✅ Default command
 CMD ["python3", "handler.py"]
